@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SearchForm } from '@/components/search/SearchForm'
 import { ResultsList } from '@/components/search/ResultsList'
 import { PaywallModal } from '@/components/paywall/PaywallModal'
 import { leadApiClient } from '@/lib/api/lead.client'
+import { createClient } from '@/lib/supabase/client'
 import { ScoredPlace } from '@/lib/types/lead'
 import { PlacesSearchParams } from '@/lib/types/places'
 
@@ -14,6 +15,14 @@ export default function DashboardPage() {
   const [searchError, setSearchError] = useState<string | null>(null)
   const [savingPlaceId, setSavingPlaceId] = useState<string | null>(null)
   const [showPaywall, setShowPaywall] = useState(false)
+  const [userEmail, setUserEmail] = useState('')
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data }) => {
+      setUserEmail(data.user?.email ?? '')
+    })
+  }, [])
 
   async function handleSearch(params: PlacesSearchParams) {
     setIsSearching(true)
@@ -77,7 +86,11 @@ export default function DashboardPage() {
         onSave={handleSave}
       />
 
-      <PaywallModal isOpen={showPaywall} onClose={() => setShowPaywall(false)} />
+      <PaywallModal
+        isOpen={showPaywall}
+        payerEmail={userEmail}
+        onClose={() => setShowPaywall(false)}
+      />
     </main>
   )
 }

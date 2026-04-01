@@ -4,7 +4,7 @@ import { UserPlan } from '@/lib/types/lead'
 interface Profile {
   id: string
   plan: UserPlan
-  stripeCustomerId: string | null
+  mpSubscriptionId: string | null
 }
 
 export class ProfileRepository {
@@ -21,11 +21,11 @@ export class ProfileRepository {
     return this.toEntity(data)
   }
 
-  async findByStripeCustomerId(customerId: string): Promise<Profile | null> {
+  async findByMpSubscriptionId(subscriptionId: string): Promise<Profile | null> {
     const { data, error } = await this.supabase
       .from('profiles')
       .select('*')
-      .eq('stripe_customer_id', customerId)
+      .eq('mp_subscription_id', subscriptionId)
       .single()
 
     if (error) return null
@@ -41,10 +41,10 @@ export class ProfileRepository {
     if (error) throw new Error(error.message)
   }
 
-  async updateStripeCustomerId(userId: string, customerId: string): Promise<void> {
+  async updateMpSubscriptionId(userId: string, subscriptionId: string): Promise<void> {
     const { error } = await this.supabase
       .from('profiles')
-      .update({ stripe_customer_id: customerId })
+      .update({ mp_subscription_id: subscriptionId })
       .eq('id', userId)
 
     if (error) throw new Error(error.message)
@@ -54,7 +54,7 @@ export class ProfileRepository {
     return {
       id: row.id as string,
       plan: row.plan as UserPlan,
-      stripeCustomerId: row.stripe_customer_id as string | null,
+      mpSubscriptionId: row.mp_subscription_id as string | null,
     }
   }
 }
