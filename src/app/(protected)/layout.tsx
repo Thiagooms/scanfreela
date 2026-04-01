@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { LogoutButton } from '@/components/ui/LogoutButton'
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -20,6 +21,7 @@ export default async function ProtectedLayout({ children }: { children: React.Re
             <Link href="/pipeline" className="text-gray-600 hover:text-gray-900 transition-colors">
               Pipeline
             </Link>
+            <LogoutButton />
           </div>
         </div>
       </nav>
