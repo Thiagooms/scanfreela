@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import { LandingHeader } from '@/components/landing/LandingHeader'
-import { HeroSection } from '@/components/landing/HeroSection'
+import { Navbar } from '@/components/landing/Navbar'
+import { Hero } from '@/components/landing/Hero'
+import { ProductShowcase } from '@/components/landing/ProductShowcase'
 
 export default async function RootPage() {
   const supabase = await createClient()
@@ -10,11 +11,10 @@ export default async function RootPage() {
   if (user) redirect('/dashboard')
 
   return (
-    <div className="min-h-screen bg-white">
-      <LandingHeader />
-      <main>
-        <HeroSection />
-      </main>
-    </div>
+    <main className="pt-[clamp(3.5rem,6.25vw,5rem)]">
+      <Navbar />
+      <Hero />
+      <ProductShowcase />
+    </main>
   )
 }
