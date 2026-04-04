@@ -1,3 +1,5 @@
+import React from 'react'
+
 export const colors = {
   text: {
     primary: '#0A0A0A',
@@ -18,6 +20,19 @@ export const PILL_STYLE: React.CSSProperties = {
   borderRadius: '40px',
   boxShadow: 'rgba(0, 0, 0, 0.1) 0px 4px 12px 0px',
 }
+
+export const fadeUpInView = (delay = 0, yOffset = 20) => ({
+  initial: { opacity: 0, y: yOffset },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true },
+  transition: { duration: 0.55, ease: EASE, delay },
+})
+
+export const fadeUpAnimate = (delay = 0, yOffset = 20) => ({
+  initial: { opacity: 0, y: yOffset },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.6, ease: EASE, delay },
+})
 
 export const CONTAINER = 'max-w-[1400px] w-full mx-auto px-[clamp(1rem,4vw,2rem)]'
 export const CONTAINER_NAV = 'max-w-[1150px] w-full mx-auto px-[clamp(1rem,4vw,2rem)]'

@@ -3,67 +3,11 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Check, X } from 'lucide-react'
-import { CONTAINER, EASE, PILL_STYLE } from './tokens'
+import { CONTAINER, PILL_STYLE, fadeUpInView } from './tokens'
+import { PLAN_CONFIGS, type PlanConfig, type PlanFeature } from '@/lib/config/plans'
 
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 24 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true },
-  transition: { duration: 0.55, ease: EASE, delay },
-})
-
-interface PlanFeature {
-  label: string
-  included: boolean
-}
-
-interface Plan {
-  name: string
-  description: string
-  price: string | null
-  period: string | null
-  cta: string
-  ctaHref: string
-  highlighted: boolean
-  features: PlanFeature[]
-}
-
-const PLANS: Plan[] = [
-  {
-    name: 'Free',
-    description: 'Para quem está começando',
-    price: null,
-    period: null,
-    cta: 'Começar grátis',
-    ctaHref: '/register',
-    highlighted: false,
-    features: [
-      { label: 'Até 10 leads salvos', included: true },
-      { label: 'Busca no Google Maps', included: true },
-      { label: 'Score automático', included: true },
-      { label: 'Pipeline Kanban', included: false },
-      { label: 'Automação via WhatsApp', included: false },
-      { label: 'Suporte prioritário', included: false },
-    ],
-  },
-  {
-    name: 'Pro',
-    description: 'Para freelancers que prospectam de verdade',
-    price: 'R$49',
-    period: '/mês',
-    cta: 'Assinar agora',
-    ctaHref: '/register?plan=pro',
-    highlighted: true,
-    features: [
-      { label: 'Leads ilimitados', included: true },
-      { label: 'Busca no Google Maps', included: true },
-      { label: 'Score automático', included: true },
-      { label: 'Pipeline Kanban completo', included: true },
-      { label: 'Automação via WhatsApp', included: true },
-      { label: 'Suporte prioritário', included: true },
-    ],
-  },
-]
+type Plan = PlanConfig
+const PLANS = PLAN_CONFIGS
 
 function FeatureRow({ feature, highlighted }: { feature: PlanFeature; highlighted: boolean }) {
   return (
@@ -216,7 +160,7 @@ export function Pricing() {
     <section id="planos" className="pt-[clamp(2rem,4vw,3.5rem)] pb-[clamp(4rem,8vw,7rem)] bg-white">
       <div className={CONTAINER}>
 
-        <motion.div {...fadeUp(0)} className="text-center mb-[clamp(2.5rem,5vw,4rem)]">
+        <motion.div {...fadeUpInView(0)} className="text-center mb-[clamp(2.5rem,5vw,4rem)]">
           <span
             className="inline-flex items-center px-4 py-1.5 text-[12px] font-medium text-black/45 mb-5"
             style={PILL_STYLE}

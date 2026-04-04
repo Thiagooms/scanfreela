@@ -1,5 +1,7 @@
 'use client'
 
+import { PRO_PLAN_CONFIG } from '@/lib/config/plans'
+
 interface PaywallOfferViewProps {
   isLoading: boolean
   onUpgrade: () => void
@@ -7,6 +9,8 @@ interface PaywallOfferViewProps {
 }
 
 export function PaywallOfferView({ isLoading, onUpgrade, onDismiss }: PaywallOfferViewProps) {
+  const includedFeatures = PRO_PLAN_CONFIG.features.filter(feature => feature.included)
+
   return (
     <>
       <h2 className="text-xl font-bold text-gray-900 mb-2">
@@ -18,12 +22,16 @@ export function PaywallOfferView({ isLoading, onUpgrade, onDismiss }: PaywallOff
       </p>
       <div className="bg-indigo-50 rounded-lg p-4 mb-6">
         <p className="text-2xl font-bold text-indigo-700">
-          R$50<span className="text-base font-normal">/mês</span>
+          {PRO_PLAN_CONFIG.price}
+          <span className="text-base font-normal">{PRO_PLAN_CONFIG.period}</span>
         </p>
         <ul className="mt-2 text-sm text-indigo-800 space-y-1">
-          <li>✓ Leads ilimitados</li>
-          <li>✓ Pipeline Kanban completo</li>
-          <li>✓ Notas e histórico de contato</li>
+          {includedFeatures.map(feature => (
+            <li key={feature.label} className="flex items-center gap-2">
+              <span aria-hidden="true">✓</span>
+              {feature.label}
+            </li>
+          ))}
         </ul>
       </div>
       <div className="flex gap-3">
@@ -32,7 +40,7 @@ export function PaywallOfferView({ isLoading, onUpgrade, onDismiss }: PaywallOff
           disabled={isLoading}
           className="flex-1 py-2 px-4 bg-indigo-600 text-white text-sm font-medium rounded-md hover:bg-indigo-700 disabled:opacity-50 transition-colors"
         >
-          {isLoading ? 'Carregando...' : 'Assinar agora'}
+          {isLoading ? 'Carregando...' : PRO_PLAN_CONFIG.cta}
         </button>
         <button
           onClick={onDismiss}

@@ -34,7 +34,12 @@ export class ProfileRepository {
 
   async getPlanByUserId(userId: string): Promise<UserPlan> {
     const profile = await this.findById(userId)
-    return profile?.plan ?? 'free'
+
+    if (!profile) {
+      return 'free'
+    }
+
+    return profile.plan
   }
 
   async updatePlan(userId: string, plan: UserPlan): Promise<void> {

@@ -1,6 +1,36 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { ForbiddenError, UnauthorizedError } from '@/lib/http/errors'
-import { Lead, LeadPersistInput, LeadUpdateInput } from '@/lib/types/lead'
+import { Lead, LeadPersistInput, LeadUpdateInput, LEAD_STATUSES } from '@/lib/types/lead'
+
+function assertString(value: unknown, fieldName: string): string {
+  if (typeof value !== 'string') {
+    throw new Error(`Campo obrigatório "${fieldName}" ausente ou em formato inválido no retorno do banco de dados`)
+  }
+  return value
+}
+
+function assertOptionalString(value: unknown, fieldName: string): string | null {
+  if (value === null || value === undefined) return null
+  if (typeof value !== 'string') {
+    throw new Error(`Campo "${fieldName}" em formato inválido no retorno do banco de dados`)
+  }
+  return value
+}
+
+function assertOptionalNumber(value: unknown, fieldName: string): number | null {
+  if (value === null || value === undefined) return null
+  if (typeof value !== 'number') {
+    throw new Error(`Campo "${fieldName}" em formato inválido no retorno do banco de dados`)
+  }
+  return value
+}
+
+function assertLeadStatus(value: unknown): Lead['status'] {
+  if (!LEAD_STATUSES.includes(value as Lead['status'])) {
+    throw new Error(`Campo "status" possui valor inválido: ${value}`)
+  }
+  return value as Lead['status']
+}
 
 export class LeadRepository {
   constructor(private readonly supabase: SupabaseClient) {}
@@ -13,7 +43,7 @@ export class LeadRepository {
       .order('created_at', { ascending: false })
 
     if (error) throw new Error(error.message)
-    return data.map(this.toEntity)
+    return data.map(row => this.toEntity(row))
   }
 
   async saveSecure(input: LeadPersistInput): Promise<Lead> {
@@ -33,7 +63,7 @@ export class LeadRepository {
 
       if (message.includes('PLAN_LIMIT_REACHED')) {
         throw new ForbiddenError(
-          'Voce atingiu o limite do plano gratuito',
+          'Você atingiu o limite do plano gratuito',
           'PLAN_LIMIT_REACHED'
         )
       }
@@ -67,19 +97,19 @@ export class LeadRepository {
 
   private toEntity(row: Record<string, unknown>): Lead {
     return {
-      id: row.id as string,
-      userId: row.user_id as string,
-      placeId: row.place_id as string,
-      name: row.name as string,
-      phone: row.phone as string | null,
-      website: row.website as string | null,
-      rating: row.rating as number | null,
-      totalRatings: row.total_ratings as number | null,
-      score: row.score as number,
-      status: row.status as Lead['status'],
-      notes: row.notes as string | null,
-      lastContact: row.last_contact as string | null,
-      createdAt: row.created_at as string,
+      id: assertString(row.id, 'id'),
+      userId: assertString(row.user_id, 'user_id'),
+      placeId: assertString(row.place_id, 'place_id'),
+      name: assertString(row.name, 'name'),
+      phone: assertOptionalString(row.phone, 'phone'),
+      website: assertOptionalString(row.website, 'website'),
+      rating: assertOptionalNumber(row.rating, 'rating'),
+      totalRatings: assertOptionalNumber(row.total_ratings, 'total_ratings'),
+      score: assertOptionalNumber(row.score, 'score') ?? 0,
+      status: assertLeadStatus(row.status),
+      notes: assertOptionalString(row.notes, 'notes'),
+      lastContact: assertOptionalString(row.last_contact, 'last_contact'),
+      createdAt: assertString(row.created_at, 'created_at'),
     }
   }
 }

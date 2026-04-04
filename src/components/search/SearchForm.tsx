@@ -9,34 +9,49 @@ interface SearchFormProps {
 }
 
 export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
-  const [query, setQuery] = useState('')
-  const [city, setCity] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchCity, setSearchCity] = useState('')
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!query.trim() || !city.trim()) return
-    onSearch({ query: query.trim(), city: city.trim() })
+  function handleSubmit(event: React.FormEvent) {
+    event.preventDefault()
+    if (!searchQuery.trim() || !searchCity.trim()) return
+    onSearch({ query: searchQuery.trim(), city: searchCity.trim() })
   }
+
+  const isSubmitDisabled = isLoading || !searchQuery.trim() || !searchCity.trim()
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3">
-      <input
-        type="text"
-        placeholder="Categoria (ex: barbearia, restaurante)"
-        value={query}
-        onChange={e => setQuery(e.target.value)}
-        className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      />
-      <input
-        type="text"
-        placeholder="Cidade"
-        value={city}
-        onChange={e => setCity(e.target.value)}
-        className="w-full sm:w-48 px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
-      />
+      <div className="flex-1">
+        <label htmlFor="search-query" className="sr-only">
+          Categoria de negócio
+        </label>
+        <input
+          id="search-query"
+          type="text"
+          placeholder="Categoria (ex: barbearia, restaurante)"
+          value={searchQuery}
+          onChange={event => setSearchQuery(event.target.value)}
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
+      <div className="w-full sm:w-48">
+        <label htmlFor="search-city" className="sr-only">
+          Cidade
+        </label>
+        <input
+          id="search-city"
+          type="text"
+          placeholder="Cidade"
+          value={searchCity}
+          onChange={event => setSearchCity(event.target.value)}
+          className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        />
+      </div>
       <button
         type="submit"
-        disabled={isLoading || !query.trim() || !city.trim()}
+        disabled={isSubmitDisabled}
+        aria-busy={isLoading}
         className="px-4 py-2 text-sm font-medium bg-indigo-600 text-white rounded-md hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
       >
         {isLoading ? 'Buscando...' : 'Buscar'}

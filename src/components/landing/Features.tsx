@@ -2,14 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
-import { CONTAINER, EASE, PILL_STYLE } from './tokens'
-
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 20 },
-  whileInView: { opacity: 1, y: 0 },
-  viewport: { once: true },
-  transition: { duration: 0.55, ease: EASE, delay },
-})
+import { CONTAINER, PILL_STYLE, fadeUpInView } from './tokens'
 
 const CARD_STYLE = {
   background: 'linear-gradient(rgb(255, 255, 255) 0%, rgb(244, 244, 244) 69.71%, rgb(250, 250, 250) 100%)',
@@ -41,7 +34,7 @@ export function Features() {
     <section id="funcionalidades" className="pt-[clamp(2rem,4vw,3.5rem)] pb-[clamp(4rem,8vw,7rem)] bg-white">
       <div className={CONTAINER}>
 
-        <motion.div {...fadeUp(0)} className="text-center mb-[clamp(2.5rem,5vw,4rem)]">
+        <motion.div {...fadeUpInView(0)} className="text-center mb-[clamp(2.5rem,5vw,4rem)]">
           <span
             className="inline-flex items-center px-4 py-1.5 text-[12px] font-medium text-black/45 mb-5"
             style={PILL_STYLE}
@@ -60,7 +53,7 @@ export function Features() {
 
           <div className="flex flex-col gap-3">
 
-            <motion.div {...fadeUp(0.08)} className="overflow-hidden p-5 md:p-8" style={CARD_STYLE}>
+            <motion.div {...fadeUpInView(0.08)} className="overflow-hidden p-5 md:p-8" style={CARD_STYLE}>
               <h3 className="text-[clamp(1.35rem,4vw,2rem)] font-semibold text-black leading-tight">
                 Buscar por Leads
               </h3>
@@ -79,7 +72,7 @@ export function Features() {
               </div>
             </motion.div>
 
-            <motion.div {...fadeUp(0.14)} className="overflow-hidden p-5 md:p-8 flex-1" style={CARD_STYLE}>
+            <motion.div {...fadeUpInView(0.14)} className="overflow-hidden p-5 md:p-8 flex-1" style={CARD_STYLE}>
               <h3 className="text-[clamp(1.35rem,4vw,2rem)] font-semibold text-black leading-tight">
                 Automação via WhatsApp
               </h3>
@@ -101,7 +94,7 @@ export function Features() {
 
           <div className="flex flex-col gap-3">
 
-            <motion.div {...fadeUp(0.08)} className="overflow-hidden p-5 md:p-8 flex-1" style={CARD_STYLE}>
+            <motion.div {...fadeUpInView(0.08)} className="overflow-hidden p-5 md:p-8 flex-1" style={CARD_STYLE}>
               <h3 className="text-[clamp(1.35rem,4vw,2rem)] font-semibold text-black leading-tight">
                 Organize seus Leads
               </h3>
@@ -118,7 +111,7 @@ export function Features() {
               </div>
             </motion.div>
 
-            <motion.div {...fadeUp(0.14)} className="overflow-hidden p-5 md:p-8" style={CARD_STYLE}>
+            <motion.div {...fadeUpInView(0.14)} className="overflow-hidden p-5 md:p-8" style={CARD_STYLE}>
               <h3 className="text-[clamp(1.35rem,4vw,2rem)] font-semibold text-black leading-tight">
                 Score automático
               </h3>

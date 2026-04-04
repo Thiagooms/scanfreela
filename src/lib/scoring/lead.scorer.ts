@@ -1,14 +1,11 @@
 import { PlaceResult } from '@/lib/types/places'
 import { ScoredPlace } from '@/lib/types/lead'
-
-const HOT_LEAD_MIN_RATING = 3
-const HOT_LEAD_MAX_RATING = 4
-const MIN_RATINGS_FOR_SCORE = 10
+import { SCORING_RULES } from '@/lib/config/business-rules'
 
 export class LeadScorer {
   score(place: PlaceResult): ScoredPlace {
-    const score = this.calcScore(place)
-    const isHotLead = this.calcIsHotLead(place.rating)
+    const calculatedScore = this.calculateScore(place)
+    const isHotLead = this.isRatingInHotLeadRange(place.rating)
 
     return {
       placeId: place.place_id,
@@ -17,22 +14,22 @@ export class LeadScorer {
       website: place.website ?? null,
       rating: place.rating ?? null,
       totalRatings: place.user_ratings_total ?? null,
-      score,
+      score: calculatedScore,
       isHotLead,
       address: place.formatted_address ?? null,
     }
   }
 
-  private calcScore(place: PlaceResult): number {
+  private calculateScore(place: PlaceResult): number {
     let score = 0
     if (place.website) score++
     if (place.formatted_phone_number) score++
-    if ((place.user_ratings_total ?? 0) >= MIN_RATINGS_FOR_SCORE) score++
+    if ((place.user_ratings_total ?? 0) >= SCORING_RULES.MIN_RATINGS_FOR_BONUS_SCORE) score++
     return score
   }
 
-  private calcIsHotLead(rating?: number): boolean {
+  private isRatingInHotLeadRange(rating?: number): boolean {
     if (rating === undefined) return false
-    return rating >= HOT_LEAD_MIN_RATING && rating <= HOT_LEAD_MAX_RATING
+    return rating >= SCORING_RULES.HOT_LEAD_MIN_RATING && rating <= SCORING_RULES.HOT_LEAD_MAX_RATING
   }
 }

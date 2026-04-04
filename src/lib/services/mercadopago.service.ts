@@ -4,14 +4,13 @@ import { buildAppUrl, getAppUrl } from '@/lib/config/app-url'
 import { ConflictError } from '@/lib/http/errors'
 import { WebhookEventRepository } from '@/lib/repositories/webhook-event.repository'
 import { ProfileRepository } from '@/lib/repositories/profile.repository'
+import { UserPlan } from '@/lib/types/lead'
 import { CreateSubscriptionInput, SubscriptionResult } from '@/lib/types/mercadopago'
-
-const MP_PLAN_REASON = 'SpotLead - Plano Pro'
-const MP_PLAN_AMOUNT = 50
-const MP_PLAN_CURRENCY = 'BRL'
-const MP_PROVIDER = 'mercadopago'
-const SUBSCRIPTION_LOCK_TTL_SECONDS = 60
-const TERMINAL_SUBSCRIPTION_STATUSES = new Set(['cancelled', 'expired', 'rejected'])
+import {
+  SUBSCRIPTION_RULES,
+  PAID_SUBSCRIPTION_STATUSES,
+  NON_REUSABLE_SUBSCRIPTION_STATUSES,
+} from '@/lib/config/business-rules'
 
 interface MercadoPagoWebhookEvent {
   action?: string
@@ -21,6 +20,8 @@ interface MercadoPagoWebhookEvent {
   resourceId: string
   type: string
 }
+
+type WebhookEventStatus = 'ignored' | 'processing' | 'processed' | 'failed'
 
 export class MercadoPagoService {
   constructor(
@@ -35,53 +36,53 @@ export class MercadoPagoService {
     payerEmail: string,
     input: CreateSubscriptionInput
   ): Promise<SubscriptionResult> {
-    const existingSubscription = await this.findReusableSubscription(userId)
-    if (existingSubscription) {
-      return existingSubscription
+    const reusableSubscription = await this.findReusableSubscription(userId)
+    if (reusableSubscription) {
+      return reusableSubscription
     }
 
     const lockId = randomUUID()
     const lockAcquired = await this.profileRepository.tryAcquireSubscriptionLock(
       userId,
       lockId,
-      SUBSCRIPTION_LOCK_TTL_SECONDS
+      SUBSCRIPTION_RULES.LOCK_TTL_SECONDS
     )
 
     if (!lockAcquired) {
       throw new ConflictError(
-        'Ja existe uma solicitacao de assinatura em andamento para este usuario',
+        'Já existe uma solicitação de assinatura em andamento para este usuário',
         'SUBSCRIPTION_CREATION_IN_PROGRESS'
       )
     }
 
     try {
-      const reusableSubscription = await this.findReusableSubscription(userId)
-      if (reusableSubscription) {
-        return reusableSubscription
+      const subscriptionAfterLock = await this.findReusableSubscription(userId)
+      if (subscriptionAfterLock) {
+        return subscriptionAfterLock
       }
 
       const planId = await this.resolvePlanId()
-      const backUrl = getAppUrl()
+      const appUrl = getAppUrl()
 
       const subscription = await this.preApproval.create({
         body: {
           preapproval_plan_id: planId,
-          reason: MP_PLAN_REASON,
+          reason: SUBSCRIPTION_RULES.PLAN_REASON,
           payer_email: payerEmail,
           card_token_id: input.cardToken,
           auto_recurring: {
             frequency: 1,
             frequency_type: 'months',
-            transaction_amount: MP_PLAN_AMOUNT,
-            currency_id: MP_PLAN_CURRENCY,
+            transaction_amount: SUBSCRIPTION_RULES.PLAN_AMOUNT,
+            currency_id: SUBSCRIPTION_RULES.PLAN_CURRENCY,
           },
-          back_url: backUrl,
+          back_url: appUrl,
           status: 'authorized',
         },
       })
 
       if (!subscription.id || !subscription.status) {
-        throw new Error('Resposta invalida do Mercado Pago ao criar assinatura')
+        throw new Error('Resposta inválida do Mercado Pago ao criar assinatura')
       }
 
       await this.profileRepository.updateMpSubscriptionId(userId, subscription.id)
@@ -100,15 +101,17 @@ export class MercadoPagoService {
       ?? event.requestId
       ?? `${event.type}:${event.resourceId}:${event.action ?? 'unknown'}`
 
-    if (await this.webhookEventRepository.isProcessed(MP_PROVIDER, providerEventId)) {
-      return
-    }
+    const alreadyProcessed = await this.webhookEventRepository.isProcessed(
+      SUBSCRIPTION_RULES.PROVIDER,
+      providerEventId
+    )
+    if (alreadyProcessed) return
 
-    await this.markProcessing(event, providerEventId)
+    await this.persistWebhookEvent(event, providerEventId, 'processing')
 
     try {
       if (event.type !== 'subscription_preapproval') {
-        await this.markIgnored(event, providerEventId)
+        await this.persistWebhookEvent(event, providerEventId, 'ignored')
         return
       }
 
@@ -116,39 +119,37 @@ export class MercadoPagoService {
       const profile = await this.profileRepository.findByMpSubscriptionId(event.resourceId)
 
       if (!profile) {
-        await this.markIgnored(event, providerEventId)
+        await this.persistWebhookEvent(event, providerEventId, 'ignored')
         return
       }
 
-      if (subscription.status === 'authorized') {
-        await this.profileRepository.updatePlan(profile.id, 'paid')
+      if (!subscription.status) {
+        throw new Error('Resposta inválida do Mercado Pago ao consultar assinatura do webhook')
       }
 
-      if (subscription.status === 'cancelled') {
-        await this.profileRepository.updatePlan(profile.id, 'free')
+      const resolvedPlan = this.resolvePlanFromSubscriptionStatus(subscription.status)
+      if (resolvedPlan) {
+        await this.profileRepository.updatePlan(profile.id, resolvedPlan)
       }
 
-      await this.markProcessed(event, providerEventId)
-    } catch (error) {
-      await this.markFailed(event, providerEventId, error)
-
-      throw error
+      await this.persistWebhookEvent(event, providerEventId, 'processed')
+    } catch (processingError) {
+      await this.persistWebhookEvent(event, providerEventId, 'failed', processingError)
+      throw processingError
     }
   }
 
   private async findReusableSubscription(userId: string): Promise<SubscriptionResult | null> {
     const profile = await this.profileRepository.findById(userId)
-    if (!profile?.mpSubscriptionId) {
-      return null
-    }
+    if (!profile?.mpSubscriptionId) return null
 
     const subscription = await this.preApproval.get({ id: profile.mpSubscriptionId })
 
     if (!subscription.id || !subscription.status) {
-      throw new Error('Resposta invalida do Mercado Pago ao consultar assinatura existente')
+      throw new Error('Resposta inválida do Mercado Pago ao consultar assinatura existente')
     }
 
-    if (this.isTerminalSubscriptionStatus(subscription.status)) {
+    if (NON_REUSABLE_SUBSCRIPTION_STATUSES.has(subscription.status)) {
       return null
     }
 
@@ -158,93 +159,55 @@ export class MercadoPagoService {
     }
   }
 
-  private isTerminalSubscriptionStatus(status: string): boolean {
-    return TERMINAL_SUBSCRIPTION_STATUSES.has(status)
+  private resolvePlanFromSubscriptionStatus(subscriptionStatus: string): UserPlan | null {
+    if (PAID_SUBSCRIPTION_STATUSES.has(subscriptionStatus)) return 'paid'
+    if (NON_REUSABLE_SUBSCRIPTION_STATUSES.has(subscriptionStatus)) return 'free'
+    return null
   }
 
-  private async markProcessing(
-    event: MercadoPagoWebhookEvent,
-    providerEventId: string
-  ): Promise<void> {
-    await this.webhookEventRepository.upsert(
-      this.buildWebhookEventRecord(event, providerEventId, 'processing')
-    )
-  }
-
-  private async markIgnored(
-    event: MercadoPagoWebhookEvent,
-    providerEventId: string
-  ): Promise<void> {
-    await this.webhookEventRepository.upsert(
-      this.buildWebhookEventRecord(event, providerEventId, 'ignored')
-    )
-  }
-
-  private async markProcessed(
-    event: MercadoPagoWebhookEvent,
-    providerEventId: string
-  ): Promise<void> {
-    await this.webhookEventRepository.upsert(
-      this.buildWebhookEventRecord(event, providerEventId, 'processed')
-    )
-  }
-
-  private async markFailed(
+  private async persistWebhookEvent(
     event: MercadoPagoWebhookEvent,
     providerEventId: string,
-    error: unknown
+    status: WebhookEventStatus,
+    error?: unknown
   ): Promise<void> {
-    await this.webhookEventRepository.upsert(
-      this.buildWebhookEventRecord(
-        event,
-        providerEventId,
-        'failed',
-        error instanceof Error ? error.message : 'Erro desconhecido'
-      )
-    )
-  }
+    const isTerminalStatus = status === 'ignored' || status === 'processed'
 
-  private buildWebhookEventRecord(
-    event: MercadoPagoWebhookEvent,
-    providerEventId: string,
-    status: 'ignored' | 'processing' | 'processed' | 'failed',
-    lastError?: string
-  ) {
-    const shouldSetProcessedAt = status === 'ignored' || status === 'processed'
-
-    return {
+    await this.webhookEventRepository.upsert({
       action: event.action ?? null,
       eventType: event.type,
-      lastError: lastError ?? null,
+      lastError: error instanceof Error ? error.message : error ? 'Erro desconhecido' : null,
       payload: event.payload,
-      processedAt: shouldSetProcessedAt ? new Date().toISOString() : null,
-      provider: MP_PROVIDER,
+      processedAt: isTerminalStatus ? new Date().toISOString() : null,
+      provider: SUBSCRIPTION_RULES.PROVIDER,
       providerEventId,
       requestId: event.requestId,
       resourceId: event.resourceId,
       status,
-    }
+    })
   }
 
   private async resolvePlanId(): Promise<string> {
-    const plans = await this.preApprovalPlan.search({ options: {} })
-    const existing = plans.results?.find(plan => plan.reason === MP_PLAN_REASON)
+    const availablePlans = await this.preApprovalPlan.search({ options: {} })
+    const existingPlan = availablePlans.results?.find(
+      plan => plan.reason === SUBSCRIPTION_RULES.PLAN_REASON
+    )
 
-    if (existing?.id) return existing.id
+    if (existingPlan?.id) return existingPlan.id
 
-    const plan = await this.preApprovalPlan.create({
+    const createdPlan = await this.preApprovalPlan.create({
       body: {
-        reason: MP_PLAN_REASON,
+        reason: SUBSCRIPTION_RULES.PLAN_REASON,
         auto_recurring: {
           frequency: 1,
           frequency_type: 'months',
-          transaction_amount: MP_PLAN_AMOUNT,
-          currency_id: MP_PLAN_CURRENCY,
+          transaction_amount: SUBSCRIPTION_RULES.PLAN_AMOUNT,
+          currency_id: SUBSCRIPTION_RULES.PLAN_CURRENCY,
         },
         back_url: buildAppUrl('/'),
       },
     })
 
-    return plan.id!
+    return createdPlan.id!
   }
 }

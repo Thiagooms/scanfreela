@@ -2,13 +2,7 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { CONTAINER, EASE } from './tokens'
-
-const fadeUp = (delay = 0) => ({
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6, ease: EASE, delay },
-})
+import { CONTAINER, fadeUpAnimate } from './tokens'
 
 export function Hero() {
   return (
@@ -18,15 +12,15 @@ export function Hero() {
         <div className="flex flex-col md:flex-row md:items-start gap-10 md:gap-8">
 
           <div className="md:w-1/2">
-            <motion.p {...fadeUp(0.1)} className="text-[clamp(2.25rem,5vw,3.5rem)] font-medium leading-none text-black">
+            <motion.p {...fadeUpAnimate(0.1)} className="text-[clamp(2.25rem,5vw,3.5rem)] font-medium leading-none text-black">
               Encontrar os teus Leads
             </motion.p>
-            <motion.p {...fadeUp(0.2)} className="text-[clamp(2.25rem,5vw,3.5rem)] font-medium text-black" style={{ lineHeight: '90.8%' }}>
+            <motion.p {...fadeUpAnimate(0.2)} className="text-[clamp(2.25rem,5vw,3.5rem)] font-medium text-black" style={{ lineHeight: '90.8%' }}>
               Nunca foi tão fácil!
             </motion.p>
           </div>
 
-          <motion.div {...fadeUp(0.35)} className="md:w-1/2 flex flex-col md:items-end items-start gap-6 mt-[10px]">
+          <motion.div {...fadeUpAnimate(0.35)} className="md:w-1/2 flex flex-col md:items-end items-start gap-6 mt-[10px]">
             <div className="flex flex-col gap-0">
               <p className="text-[0.9rem] font-light text-black md:text-right text-left md:ml-[30px]" style={{ lineHeight: '115%' }}>
                 Busque negócios no <strong className="font-bold">Google Maps</strong>, identifique os melhores <strong className="font-bold">leads</strong><br className="hidden md:block" />
