@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { Navbar } from '@/components/landing/Navbar'
 import { Hero } from '@/components/landing/Hero'
 import { ProductShowcase } from '@/components/landing/ProductShowcase'
+import { Features } from '@/components/landing/Features'
 
 export default async function RootPage() {
   const supabase = await createClient()
@@ -15,6 +16,7 @@ export default async function RootPage() {
       <Navbar />
       <Hero />
       <ProductShowcase />
+      <Features />
     </main>
   )
 }

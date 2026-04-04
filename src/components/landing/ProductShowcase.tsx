@@ -37,6 +37,7 @@ function DesktopShowcase() {
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
       >
         <motion.div
+          className="-ml-14 lg:-ml-20 mt-8"
           initial={{ opacity: 0, x: -24 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}

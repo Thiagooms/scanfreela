@@ -11,8 +11,11 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'SpotLead',
-  description: 'Encontre clientes. Feche contratos.',
+  title: 'SpotLead — Encontre, qualifique e feche mais negócios',
+  description: 'Encontre negócios locais, colete contatos automaticamente e gerencie seus leads em um pipeline Kanban. Prospecção sem planilha, sem esforço.',
+  icons: {
+    icon: '/favicon.svg',
+  },
 }
 
 export default function RootLayout({
