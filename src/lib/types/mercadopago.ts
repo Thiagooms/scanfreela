@@ -5,5 +5,4 @@ export interface SubscriptionResult {
 
 export interface CreateSubscriptionInput {
   cardToken: string
-  payerEmail: string
 }

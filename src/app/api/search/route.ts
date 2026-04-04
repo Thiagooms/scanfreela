@@ -1,26 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/supabase/auth'
 import { makePlacesService } from '@/lib/factories/service.factory'
-import { PlacesSearchParams } from '@/lib/types/places'
+import { handleRouteError } from '@/lib/http/responses'
+import { parseSearchParams } from '@/lib/validation/search'
 
 const placesService = makePlacesService()
 
 export async function POST(request: NextRequest) {
-  return withAuth(async () => {
-    const body: PlacesSearchParams = await request.json()
-
-    const query = body.query?.trim()
-    const city = body.city?.trim()
-
-    if (!query || !city) {
-      return NextResponse.json({ error: 'query and city are required' }, { status: 400 })
+  return withAuth(async (user) => {
+    try {
+      const body = parseSearchParams(await request.json())
+      const result = await placesService.search(user.id, body)
+      return NextResponse.json(result.places, {
+        headers: {
+          'X-RateLimit-Remaining': String(result.rateLimit.remaining),
+          'X-RateLimit-Reset': result.rateLimit.resetAt,
+        },
+      })
+    } catch (error) {
+      return handleRouteError(error, 'Search API error:')
     }
-
-    if (query.length > 100 || city.length > 100) {
-      return NextResponse.json({ error: 'query and city must be under 100 characters' }, { status: 400 })
-    }
-
-    const results = await placesService.search(body)
-    return NextResponse.json(results)
   })
 }

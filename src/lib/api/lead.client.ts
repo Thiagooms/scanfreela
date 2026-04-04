@@ -31,7 +31,15 @@ export const leadApiClient = {
     })
 
     if (response.status === 403) {
-      return { success: false, planLimitReached: true }
+      try {
+        await parseResponse<never>(response)
+      } catch (error) {
+        if (error instanceof ApiError && error.code === 'PLAN_LIMIT_REACHED') {
+          return { success: false, planLimitReached: true }
+        }
+
+        throw error
+      }
     }
 
     const lead = await parseResponse<Lead>(response)

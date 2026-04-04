@@ -1,5 +1,6 @@
 import { SupabaseClient } from '@supabase/supabase-js'
-import { Lead, LeadCreateInput, LeadUpdateInput } from '@/lib/types/lead'
+import { ForbiddenError, UnauthorizedError } from '@/lib/http/errors'
+import { Lead, LeadPersistInput, LeadUpdateInput } from '@/lib/types/lead'
 
 export class LeadRepository {
   constructor(private readonly supabase: SupabaseClient) {}
@@ -15,43 +16,45 @@ export class LeadRepository {
     return data.map(this.toEntity)
   }
 
-  async countByUser(userId: string): Promise<number> {
-    const { count, error } = await this.supabase
-      .from('leads')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-
-    if (error) throw new Error(error.message)
-    return count ?? 0
-  }
-
-  async create(userId: string, input: LeadCreateInput): Promise<Lead> {
+  async saveSecure(input: LeadPersistInput): Promise<Lead> {
     const { data, error } = await this.supabase
-      .from('leads')
-      .insert({
-        user_id: userId,
-        place_id: input.placeId,
-        name: input.name,
-        phone: input.phone,
-        website: input.website,
-        rating: input.rating,
-        total_ratings: input.totalRatings,
-        score: input.score,
+      .rpc('save_lead_secure', {
+        p_name: input.name,
+        p_phone: input.phone,
+        p_place_id: input.placeId,
+        p_rating: input.rating,
+        p_total_ratings: input.totalRatings,
+        p_website: input.website,
       })
-      .select()
       .single()
 
-    if (error) throw new Error(error.message)
-    return this.toEntity(data)
+    if (error || !data) {
+      const message = error?.message ?? 'Lead was not returned from save_lead_secure'
+
+      if (message.includes('PLAN_LIMIT_REACHED')) {
+        throw new ForbiddenError(
+          'Voce atingiu o limite do plano gratuito',
+          'PLAN_LIMIT_REACHED'
+        )
+      }
+
+      if (message.includes('UNAUTHORIZED')) {
+        throw new UnauthorizedError()
+      }
+
+      throw new Error(message)
+    }
+
+    return this.toEntity(data as Record<string, unknown>)
   }
 
   async update(leadId: string, userId: string, input: LeadUpdateInput): Promise<Lead> {
     const { data, error } = await this.supabase
       .from('leads')
       .update({
-        ...(input.status && { status: input.status }),
+        ...(input.status !== undefined && { status: input.status }),
         ...(input.notes !== undefined && { notes: input.notes }),
-        ...(input.lastContact && { last_contact: input.lastContact }),
+        ...(input.lastContact !== undefined && { last_contact: input.lastContact }),
       })
       .eq('id', leadId)
       .eq('user_id', userId)

@@ -1,13 +1,18 @@
 import { redirect } from 'next/navigation'
-import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { LogoutButton } from '@/components/ui/LogoutButton'
+import { makeProfileRepository } from '@/lib/factories/service.factory'
+import { createClient } from '@/lib/supabase/server'
 
 export default async function ProtectedLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
+
+  const profileRepository = makeProfileRepository(supabase)
+  const profile = await profileRepository.findById(user.id)
+  const isPaidUser = profile?.plan === 'paid'
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -18,9 +23,11 @@ export default async function ProtectedLayout({ children }: { children: React.Re
             <Link href="/dashboard" className="text-gray-600 hover:text-gray-900 transition-colors">
               Buscar
             </Link>
-            <Link href="/pipeline" className="text-gray-600 hover:text-gray-900 transition-colors">
-              Pipeline
-            </Link>
+            {isPaidUser && (
+              <Link href="/pipeline" className="text-gray-600 hover:text-gray-900 transition-colors">
+                Pipeline
+              </Link>
+            )}
             <Link href="/upgrade" className="text-gray-600 hover:text-gray-900 transition-colors">
               Planos
             </Link>

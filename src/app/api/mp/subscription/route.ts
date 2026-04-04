@@ -1,22 +1,27 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/supabase/auth'
 import { makeMercadoPagoService } from '@/lib/factories/service.factory'
-import { CreateSubscriptionInput } from '@/lib/types/mercadopago'
+import { ValidationError } from '@/lib/http/errors'
+import { handleRouteError } from '@/lib/http/responses'
+import { parseCreateSubscriptionInput } from '@/lib/validation/mercadopago'
 
 const mpService = makeMercadoPagoService()
 
 export async function POST(request: NextRequest) {
   return withAuth(async (user) => {
     try {
-      const body: CreateSubscriptionInput = await request.json()
-      const result = await mpService.createSubscription(user.id, body)
+      if (!user.email) {
+        throw new ValidationError(
+          'Usuario autenticado sem e-mail valido',
+          'USER_EMAIL_REQUIRED'
+        )
+      }
+
+      const body = parseCreateSubscriptionInput(await request.json())
+      const result = await mpService.createSubscription(user.id, user.email, body)
       return NextResponse.json(result)
     } catch (error) {
-      console.error('MP subscription error:', error)
-      return NextResponse.json(
-        { error: error instanceof Error ? error.message : 'Erro ao criar assinatura' },
-        { status: 500 }
-      )
+      return handleRouteError(error, 'MP subscription error:')
     }
   })
 }

@@ -1,8 +1,9 @@
 import { parseResponse } from '@/lib/api/errors'
+import { UserPlan } from '@/lib/types/lead'
 
 interface ProfileResult {
   id: string
-  plan: string
+  plan: UserPlan
   mpSubscriptionId: string | null
 }
 

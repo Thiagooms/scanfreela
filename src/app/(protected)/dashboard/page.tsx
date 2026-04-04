@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { SearchForm } from '@/components/search/SearchForm'
 import { ResultsList } from '@/components/search/ResultsList'
 import { PaywallModal } from '@/components/paywall/PaywallModal'
+import { ApiError } from '@/lib/api/errors'
 import { leadApiClient } from '@/lib/api/lead.client'
 import { createClient } from '@/lib/supabase/client'
 import { ScoredPlace } from '@/lib/types/lead'
@@ -32,8 +33,12 @@ export default function DashboardPage() {
     try {
       const places = await leadApiClient.search(params)
       setResults(places)
-    } catch {
-      setSearchError('Erro ao buscar negócios. Tente novamente.')
+    } catch (error) {
+      if (error instanceof ApiError && error.code === 'SEARCH_RATE_LIMIT_EXCEEDED') {
+        setSearchError('Limite de buscas excedido. Aguarde um instante antes de tentar de novo.')
+      } else {
+        setSearchError('Erro ao buscar negocios. Tente novamente.')
+      }
     } finally {
       setIsSearching(false)
     }
@@ -45,12 +50,6 @@ export default function DashboardPage() {
     try {
       const result = await leadApiClient.save({
         placeId: place.placeId,
-        name: place.name,
-        phone: place.phone,
-        website: place.website,
-        rating: place.rating,
-        totalRatings: place.totalRatings,
-        score: place.score,
       })
 
       if (!result.success && result.planLimitReached) {
@@ -65,7 +64,7 @@ export default function DashboardPage() {
     <main className="max-w-6xl mx-auto px-4 py-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-1">Buscar leads</h1>
-        <p className="text-sm text-gray-500">Encontre negócios por categoria e cidade</p>
+        <p className="text-sm text-gray-500">Encontre negocios por categoria e cidade</p>
       </div>
 
       <div className="mb-8">
@@ -73,7 +72,7 @@ export default function DashboardPage() {
       </div>
 
       {isSearching && (
-        <p className="text-sm text-gray-500 text-center py-12">Buscando negócios...</p>
+        <p className="text-sm text-gray-500 text-center py-12">Buscando negocios...</p>
       )}
 
       {searchError && (

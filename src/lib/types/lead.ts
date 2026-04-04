@@ -2,6 +2,9 @@ export type LeadStatus = 'new' | 'approached' | 'negotiating' | 'closed'
 
 export type UserPlan = 'free' | 'paid'
 
+export const LEAD_STATUSES = ['new', 'approached', 'negotiating', 'closed'] as const
+export const USER_PLANS = ['free', 'paid'] as const
+
 export const LEAD_STATUS_FLOW: Record<LeadStatus, LeadStatus | null> = {
   new: 'approached',
   approached: 'negotiating',
@@ -43,18 +46,21 @@ export interface Lead {
 
 export interface LeadCreateInput {
   placeId: string
+}
+
+export interface LeadPersistInput {
+  placeId: string
   name: string
   phone: string | null
   website: string | null
   rating: number | null
   totalRatings: number | null
-  score: number
 }
 
 export interface LeadUpdateInput {
   status?: LeadStatus
-  notes?: string
-  lastContact?: string
+  notes?: string | null
+  lastContact?: string | null
 }
 
 export interface ScoredPlace {

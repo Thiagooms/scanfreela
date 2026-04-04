@@ -1,18 +1,48 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { makeMercadoPagoService } from '@/lib/factories/service.factory'
+import {
+  ConfigurationError,
+  UnauthorizedError,
+} from '@/lib/http/errors'
+import { handleRouteError } from '@/lib/http/responses'
+import { parseMercadoPagoWebhookPayload } from '@/lib/validation/mercadopago'
 
 const mpService = makeMercadoPagoService()
+
+function getWebhookSecret(): string | null {
+  const secret = process.env.MP_WEBHOOK_SECRET?.trim()
+  if (secret) return secret
+
+  if (process.env.NODE_ENV === 'production') {
+    throw new ConfigurationError(
+      'Webhook do Mercado Pago sem segredo configurado',
+      'MP_WEBHOOK_SECRET_MISSING'
+    )
+  }
+
+  return null
+}
+
+function safeCompareHex(expected: string, received: string): boolean {
+  if (expected.length !== received.length) return false
+
+  const expectedBuffer = Buffer.from(expected, 'hex')
+  const receivedBuffer = Buffer.from(received, 'hex')
+  if (expectedBuffer.length !== receivedBuffer.length) return false
+
+  return timingSafeEqual(expectedBuffer, receivedBuffer)
+}
 
 async function isValidSignature(
   request: NextRequest,
   dataId: string
 ): Promise<boolean> {
-  const secret = process.env.MP_WEBHOOK_SECRET
+  const secret = getWebhookSecret()
   if (!secret) return true
 
   const xSignature = request.headers.get('x-signature')
   const xRequestId = request.headers.get('x-request-id')
-
   if (!xSignature || !xRequestId) return false
 
   const parts = Object.fromEntries(
@@ -22,48 +52,43 @@ async function isValidSignature(
     })
   )
 
-  const ts = parts['ts']
-  const v1 = parts['v1']
-
+  const ts = parts.ts
+  const v1 = parts.v1?.toLowerCase()
   if (!ts || !v1) return false
 
-  const template = `id:${dataId};request-id:${xRequestId};ts:${ts};`
-  const encoder = new TextEncoder()
+  const manifest = `id:${dataId};request-id:${xRequestId};ts:${ts};`
+  const expectedSignature = createHmac('sha256', secret)
+    .update(manifest)
+    .digest('hex')
 
-  const key = await crypto.subtle.importKey(
-    'raw',
-    encoder.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['sign']
-  )
-
-  const signature = await crypto.subtle.sign('HMAC', key, encoder.encode(template))
-  const hashHex = Array.from(new Uint8Array(signature))
-    .map(b => b.toString(16).padStart(2, '0'))
-    .join('')
-
-  return hashHex === v1
+  return safeCompareHex(expectedSignature, v1)
 }
 
 export async function POST(request: NextRequest) {
   try {
     const rawBody = await request.text()
-    const { type, data } = JSON.parse(rawBody)
+    const parsedPayload = JSON.parse(rawBody) as unknown
+    const payload = parseMercadoPagoWebhookPayload(rawBody)
+    const valid = await isValidSignature(request, payload.dataId)
 
-    if (!type || !data?.id) {
-      return NextResponse.json({ received: true })
-    }
-
-    const valid = await isValidSignature(request, data.id)
     if (!valid) {
-      return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
+      throw new UnauthorizedError(
+        'Assinatura do webhook invalida',
+        'INVALID_WEBHOOK_SIGNATURE'
+      )
     }
 
-    await mpService.handleWebhook(type, data.id)
+    await mpService.handleWebhook({
+      action: payload.action,
+      eventId: payload.eventId,
+      payload: parsedPayload,
+      requestId: request.headers.get('x-request-id'),
+      resourceId: payload.dataId,
+      type: payload.type,
+    })
+
     return NextResponse.json({ received: true })
   } catch (error) {
-    console.error('MP webhook error:', error)
-    return NextResponse.json({ received: true })
+    return handleRouteError(error, 'MP webhook error:')
   }
 }

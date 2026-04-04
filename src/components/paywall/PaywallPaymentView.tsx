@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import { initMercadoPago, CardPayment } from '@mercadopago/sdk-react'
 import { mpApiClient } from '@/lib/api/mp.client'
 
@@ -12,15 +13,18 @@ interface PaywallPaymentViewProps {
 initMercadoPago(process.env.NEXT_PUBLIC_MP_PUBLIC_KEY!, { locale: 'pt-BR' })
 
 export function PaywallPaymentView({ payerEmail, onSuccess, onCancel }: PaywallPaymentViewProps) {
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+
   async function handleSubmit(formData: { token: string }) {
     try {
+      setErrorMessage(null)
       await mpApiClient.createSubscription({
         cardToken: formData.token,
-        payerEmail,
       })
       onSuccess()
     } catch (error) {
       console.error('Erro ao criar assinatura:', error)
+      setErrorMessage('Nao foi possivel concluir a assinatura. Revise os dados e tente novamente.')
     }
   }
 
@@ -34,6 +38,9 @@ export function PaywallPaymentView({ payerEmail, onSuccess, onCancel }: PaywallP
         onReady={() => {}}
         onError={(error) => console.error('MP Brick error:', error)}
       />
+      {errorMessage && (
+        <p className="mt-4 text-sm text-red-600">{errorMessage}</p>
+      )}
       <button
         onClick={onCancel}
         className="mt-4 w-full py-2 px-4 text-gray-600 text-sm font-medium rounded-md hover:bg-gray-100 transition-colors"

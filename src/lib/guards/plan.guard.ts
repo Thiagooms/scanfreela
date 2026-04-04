@@ -1,30 +1,25 @@
 import { ProfileRepository } from '@/lib/repositories/profile.repository'
-import { LeadRepository } from '@/lib/repositories/lead.repository'
+import { ForbiddenError } from '@/lib/http/errors'
+import { UserPlan } from '@/lib/types/lead'
 
 const FREE_PLAN_LEAD_LIMIT = 10
 
-export class PlanLimitError extends Error {
-  constructor() {
-    super('Lead limit reached for free plan')
-    this.name = 'PlanLimitError'
-  }
-}
-
 export class PlanGuard {
-  constructor(
-    private readonly profileRepository: ProfileRepository,
-    private readonly leadRepository: LeadRepository
-  ) {}
+  constructor(private readonly profileRepository: ProfileRepository) {}
 
-  async assertCanSaveLead(userId: string): Promise<void> {
-    const profile = await this.profileRepository.findById(userId)
+  async getPlan(userId: string): Promise<UserPlan> {
+    return this.profileRepository.getPlanByUserId(userId)
+  }
 
-    if (profile?.plan === 'paid') return
-
-    const leadCount = await this.leadRepository.countByUser(userId)
-
-    if (leadCount >= FREE_PLAN_LEAD_LIMIT) {
-      throw new PlanLimitError()
+  async assertPaidPlan(userId: string): Promise<void> {
+    const plan = await this.getPlan(userId)
+    if (plan !== 'paid') {
+      throw new ForbiddenError(
+        'Seu plano atual nao possui acesso a este recurso',
+        'PAID_PLAN_REQUIRED'
+      )
     }
   }
 }
+
+export { FREE_PLAN_LEAD_LIMIT }

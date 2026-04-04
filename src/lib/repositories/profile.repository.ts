@@ -1,7 +1,7 @@
 import { SupabaseClient } from '@supabase/supabase-js'
 import { UserPlan } from '@/lib/types/lead'
 
-interface Profile {
+export interface Profile {
   id: string
   plan: UserPlan
   mpSubscriptionId: string | null
@@ -15,9 +15,9 @@ export class ProfileRepository {
       .from('profiles')
       .select('*')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
 
-    if (error) return null
+    if (error) throw new Error(error.message)
     return this.toEntity(data)
   }
 
@@ -26,10 +26,15 @@ export class ProfileRepository {
       .from('profiles')
       .select('*')
       .eq('mp_subscription_id', subscriptionId)
-      .single()
+      .maybeSingle()
 
-    if (error) return null
+    if (error) throw new Error(error.message)
     return this.toEntity(data)
+  }
+
+  async getPlanByUserId(userId: string): Promise<UserPlan> {
+    const profile = await this.findById(userId)
+    return profile?.plan ?? 'free'
   }
 
   async updatePlan(userId: string, plan: UserPlan): Promise<void> {
@@ -50,7 +55,9 @@ export class ProfileRepository {
     if (error) throw new Error(error.message)
   }
 
-  private toEntity(row: Record<string, unknown>): Profile {
+  private toEntity(row: Record<string, unknown> | null): Profile | null {
+    if (!row) return null
+
     return {
       id: row.id as string,
       plan: row.plan as UserPlan,
