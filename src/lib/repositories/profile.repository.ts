@@ -55,6 +55,30 @@ export class ProfileRepository {
     if (error) throw new Error(error.message)
   }
 
+  async tryAcquireSubscriptionLock(
+    userId: string,
+    lockId: string,
+    ttlSeconds: number
+  ): Promise<boolean> {
+    const { data, error } = await this.supabase.rpc('try_acquire_subscription_lock', {
+      p_lock_id: lockId,
+      p_lock_ttl_seconds: ttlSeconds,
+      p_user_id: userId,
+    })
+
+    if (error) throw new Error(error.message)
+    return data === true
+  }
+
+  async releaseSubscriptionLock(userId: string, lockId: string): Promise<void> {
+    const { error } = await this.supabase.rpc('release_subscription_lock', {
+      p_lock_id: lockId,
+      p_user_id: userId,
+    })
+
+    if (error) throw new Error(error.message)
+  }
+
   private toEntity(row: Record<string, unknown> | null): Profile | null {
     if (!row) return null
 
