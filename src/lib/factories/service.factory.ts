@@ -49,7 +49,13 @@ export function makeLeadService(supabase: SupabaseClient): LeadService {
   const leadRepository = new LeadRepository(supabase)
   const scorer = makeLeadScorer()
   const placesRepository = makePlacesRepository()
-  return new LeadService(leadRepository, placesRepository, scorer)
+  return new LeadService(
+    leadRepository,
+    placesRepository,
+    scorer,
+    sharedProfileRepository,
+    sharedRateLimitRepository
+  )
 }
 
 export function makeProfileRepository(supabase: SupabaseClient): ProfileRepository {

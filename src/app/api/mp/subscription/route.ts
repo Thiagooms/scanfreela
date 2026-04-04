@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { withAuth } from '@/lib/supabase/auth'
 import { makeMercadoPagoService } from '@/lib/factories/service.factory'
 import { ValidationError } from '@/lib/http/errors'
+import { readJsonBody } from '@/lib/http/request'
 import { handleRouteError } from '@/lib/http/responses'
 import { parseCreateSubscriptionInput } from '@/lib/validation/mercadopago'
 
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      const body = parseCreateSubscriptionInput(await request.json())
+      const body = parseCreateSubscriptionInput(await readJsonBody(request))
       const result = await mpService.createSubscription(user.id, user.email, body)
       return NextResponse.json(result)
     } catch (error) {
