@@ -14,7 +14,6 @@ export async function GET() {
       return NextResponse.json({
         id: user.id,
         plan: profile?.plan ?? 'free',
-        mpSubscriptionId: profile?.mpSubscriptionId ?? null,
       })
     } catch (error) {
       return handleRouteError(error, 'Profile API error:')

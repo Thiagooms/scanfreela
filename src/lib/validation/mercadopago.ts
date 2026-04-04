@@ -1,17 +1,13 @@
 import { ValidationError } from '@/lib/http/errors'
-import { CreateSubscriptionInput } from '@/lib/types/mercadopago'
+import {
+  CreateSubscriptionInput,
+  ParsedMercadoPagoWebhook,
+} from '@/lib/types/mercadopago'
 import {
   ensureObject,
   readRequiredIdentifier,
   readRequiredString,
 } from '@/lib/validation/base'
-
-export interface MercadoPagoWebhookPayload {
-  action?: string
-  dataId: string
-  eventId?: string
-  type: string
-}
 
 export function parseCreateSubscriptionInput(input: unknown): CreateSubscriptionInput {
   const body = ensureObject(input)
@@ -25,7 +21,7 @@ export function parseCreateSubscriptionInput(input: unknown): CreateSubscription
   }
 }
 
-export function parseMercadoPagoWebhookPayload(rawBody: string): MercadoPagoWebhookPayload {
+export function parseMercadoPagoWebhookPayload(rawBody: string): ParsedMercadoPagoWebhook {
   let parsed: unknown
 
   try {
@@ -50,13 +46,16 @@ export function parseMercadoPagoWebhookPayload(rawBody: string): MercadoPagoWebh
       })
 
   return {
-    type: readRequiredString(body.type, {
-      field: 'type',
-      minLength: 1,
-      maxLength: 255,
-    }),
-    dataId: readRequiredIdentifier(data.id, 'data.id'),
-    ...(eventId && { eventId }),
-    ...(action && { action }),
+    payload: body,
+    webhook: {
+      type: readRequiredString(body.type, {
+        field: 'type',
+        minLength: 1,
+        maxLength: 255,
+      }),
+      dataId: readRequiredIdentifier(data.id, 'data.id'),
+      ...(eventId && { eventId }),
+      ...(action && { action }),
+    },
   }
 }
