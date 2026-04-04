@@ -71,7 +71,7 @@ function CardPill() {
       transition={transition}
     >
       <Image
-        src="/assets/logo.svg"
+        src="/assets/logo-nova.svg"
         alt="Spotlead"
         width={18}
         height={18}

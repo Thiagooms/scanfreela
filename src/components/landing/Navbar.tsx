@@ -1,27 +1,11 @@
 'use client'
 
-import Image from 'next/image'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import { useState, useEffect } from 'react'
 import { motion, useScroll } from 'framer-motion'
-import { CONTAINER_NAV } from './tokens'
-
-const NAV_OFFSET = -96
-
-type WindowWithLenis = typeof window & { __lenis?: { scrollTo: (target: HTMLElement | number, opts?: { offset?: number }) => void } }
-
-function scrollToSection(id: string) {
-  const el = document.getElementById(id)
-  if (!el) return
-  const lenis = (window as WindowWithLenis).__lenis
-  if (lenis) {
-    lenis.scrollTo(el, { offset: NAV_OFFSET })
-  } else {
-    const top = el.getBoundingClientRect().top + window.scrollY + NAV_OFFSET
-    window.scrollTo({ top, behavior: 'smooth' })
-  }
-}
+import { CONTAINER_NAV, colors, EASE } from './tokens'
+import { scrollToSection, scrollToTop } from '@/lib/lenis'
 
 export function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
@@ -49,7 +33,7 @@ export function Navbar() {
           boxShadow: '0 2px 20px rgba(0,0,0,0.06)',
         },
       }}
-      transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1], delay: 0.06 }}
+      transition={{ duration: 0.45, ease: EASE, delay: 0.06 }}
       style={{
         backdropFilter: scrolled ? 'blur(16px) saturate(180%)' : 'none',
         WebkitBackdropFilter: scrolled ? 'blur(16px) saturate(180%)' : 'none',
@@ -59,22 +43,15 @@ export function Navbar() {
       <div className={`${CONTAINER_NAV} flex items-center justify-between h-[clamp(3.5rem,6.25vw,5rem)]`}>
 
         <button
-          onClick={() => {
-            const lenis = (window as WindowWithLenis).__lenis
-            if (lenis) lenis.scrollTo(0)
-            else window.scrollTo({ top: 0, behavior: 'smooth' })
-          }}
-          className="flex items-center gap-[10px] shrink-0 cursor-pointer"
+          onClick={scrollToTop}
+          className="flex items-center gap-[10px] shrink-0 cursor-pointer overflow-visible"
         >
-          <Image
-            src="/assets/logo.svg"
+          <img
+            src="/assets/logo-nova.svg"
             alt="SpotLead logo"
-            width={32}
-            height={32}
-            className="h-[clamp(1.5rem,2vw,2rem)] w-auto"
-            style={{ filter: 'brightness(0)' }}
+            style={{ height: 'clamp(2.5rem, 4vw, 3.25rem)', width: 'auto' }}
           />
-          <span className="text-[clamp(0.875rem,1.1vw,1rem)] font-semibold text-black tracking-tight">
+          <span style={{ color: colors.brandAlt }} className="text-[clamp(0.9rem,1.2vw,1.05rem)] font-semibold tracking-tight">
             Spotlead
           </span>
         </button>

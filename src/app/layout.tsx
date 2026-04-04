@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   title: 'SpotLead — Encontre, qualifique e feche mais negócios',
   description: 'Encontre negócios locais, colete contatos automaticamente e gerencie seus leads em um pipeline Kanban. Prospecção sem planilha, sem esforço.',
   icons: {
-    icon: '/favicon.svg',
+    icon: '/assets/logo-nova.svg',
   },
 }
 

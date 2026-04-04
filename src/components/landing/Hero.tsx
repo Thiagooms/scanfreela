@@ -2,12 +2,12 @@
 
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { CONTAINER } from './tokens'
+import { CONTAINER, EASE } from './tokens'
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay },
+  transition: { duration: 0.6, ease: EASE, delay },
 })
 
 export function Hero() {

@@ -3,21 +3,14 @@
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Check, X } from 'lucide-react'
-import { CONTAINER } from './tokens'
+import { CONTAINER, EASE, PILL_STYLE } from './tokens'
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 24 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true },
-  transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] as const, delay },
+  transition: { duration: 0.55, ease: EASE, delay },
 })
-
-const PILL_STYLE = {
-  backgroundColor: 'rgb(255, 255, 255)',
-  border: '1px solid rgb(230, 230, 230)',
-  borderRadius: '40px',
-  boxShadow: 'rgba(0, 0, 0, 0.1) 0px 4px 12px 0px',
-}
 
 interface PlanFeature {
   label: string
@@ -79,7 +72,7 @@ function FeatureRow({ feature, highlighted }: { feature: PlanFeature; highlighte
       initial={{ opacity: 0, x: -8 }}
       whileInView={{ opacity: 1, x: 0 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] as const }}
+      transition={{ duration: 0.35, ease: EASE }}
     >
       {feature.included ? (
         <Check size={15} className={`shrink-0 ${highlighted ? 'text-white' : 'text-black'}`} strokeWidth={2.5} />
@@ -99,13 +92,13 @@ function PlanCard({ plan, delay }: { plan: Plan; delay: number }) {
       initial={{ opacity: 0, y: 36, scale: 0.97 }}
       whileInView={{ opacity: 1, y: 0, scale: 1 }}
       viewport={{ once: true }}
-      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] as const, delay }}
+      transition={{ duration: 0.6, ease: EASE, delay }}
       whileHover={{
         y: -6,
         boxShadow: plan.highlighted
           ? '0 32px 64px rgba(0,0,0,0.35), 0 8px 24px rgba(0,0,0,0.2)'
           : '0 32px 64px rgba(0,0,0,0.10), 0 8px 24px rgba(0,0,0,0.06)',
-        transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
+        transition: { duration: 0.35, ease: EASE },
       }}
       className={`rounded-3xl p-10 flex flex-col min-h-[520px] cursor-default ${
         plan.highlighted
@@ -144,7 +137,7 @@ function PlanCard({ plan, delay }: { plan: Plan; delay: number }) {
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] as const, delay: delay + 0.1 }}
+              transition={{ duration: 0.5, ease: EASE, delay: delay + 0.1 }}
             >
               {plan.price}
             </motion.span>
@@ -159,7 +152,7 @@ function PlanCard({ plan, delay }: { plan: Plan; delay: number }) {
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] as const, delay: delay + 0.1 }}
+              transition={{ duration: 0.5, ease: EASE, delay: delay + 0.1 }}
             >
               Grátis
             </motion.span>
@@ -173,7 +166,7 @@ function PlanCard({ plan, delay }: { plan: Plan; delay: number }) {
       <motion.div
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
-        transition={{ duration: 0.18, ease: [0.22, 1, 0.36, 1] }}
+        transition={{ duration: 0.18, ease: EASE }}
         className="mt-8"
       >
         <Link

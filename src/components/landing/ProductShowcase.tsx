@@ -3,7 +3,7 @@
 import Image from 'next/image'
 import { motion } from 'framer-motion'
 import { LeadCards } from './LeadCards'
-import { CONTAINER } from './tokens'
+import { CONTAINER, EASE } from './tokens'
 
 function MobileShowcase() {
   return (
@@ -34,14 +34,14 @@ function DesktopShowcase() {
         initial={{ opacity: 0, y: 32 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
+        transition={{ duration: 0.7, ease: EASE, delay: 0.1 }}
       >
         <motion.div
           className="-ml-14 lg:-ml-20 mt-8"
           initial={{ opacity: 0, x: -24 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
+          transition={{ duration: 0.7, ease: EASE, delay: 0.25 }}
         >
           <Image
             src="/assets/product-show-case.png"
@@ -58,7 +58,7 @@ function DesktopShowcase() {
           initial={{ opacity: 0, x: 32 }}
           whileInView={{ opacity: 1, x: 0 }}
           viewport={{ once: true }}
-          transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.4 }}
+          transition={{ duration: 0.7, ease: EASE, delay: 0.4 }}
         >
           <LeadCards />
         </motion.div>

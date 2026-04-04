@@ -4,8 +4,7 @@ import { useEffect } from 'react'
 import { RouterProvider } from 'react-aria-components'
 import { useRouter } from 'next/navigation'
 import Lenis from 'lenis'
-
-type WindowWithLenis = typeof window & { __lenis?: Lenis }
+import type { WindowWithLenis } from '@/lib/lenis'
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter()
@@ -19,14 +18,17 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
     ;(window as WindowWithLenis).__lenis = lenis
 
+    let rafId: number
+
     function raf(time: number) {
       lenis.raf(time)
-      requestAnimationFrame(raf)
+      rafId = requestAnimationFrame(raf)
     }
 
-    requestAnimationFrame(raf)
+    rafId = requestAnimationFrame(raf)
 
     return () => {
+      cancelAnimationFrame(rafId)
       lenis.destroy()
       ;(window as WindowWithLenis).__lenis = undefined
     }

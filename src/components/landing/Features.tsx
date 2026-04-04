@@ -2,26 +2,19 @@
 
 import { motion } from 'framer-motion'
 import { Search } from 'lucide-react'
-import { CONTAINER } from './tokens'
+import { CONTAINER, EASE, PILL_STYLE } from './tokens'
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 20 },
   whileInView: { opacity: 1, y: 0 },
   viewport: { once: true },
-  transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] as const, delay },
+  transition: { duration: 0.55, ease: EASE, delay },
 })
 
 const CARD_STYLE = {
   background: 'linear-gradient(rgb(255, 255, 255) 0%, rgb(244, 244, 244) 69.71%, rgb(250, 250, 250) 100%)',
   border: '1px solid rgb(238, 238, 238)',
   borderRadius: '24px',
-}
-
-const PILL_STYLE = {
-  backgroundColor: 'rgb(255, 255, 255)',
-  border: '1px solid rgb(230, 230, 230)',
-  borderRadius: '40px',
-  boxShadow: 'rgba(0, 0, 0, 0.1) 0px 4px 12px 0px',
 }
 
 const CHAT_MESSAGES = [
