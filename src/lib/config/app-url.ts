@@ -43,3 +43,11 @@ export function getAppUrl(): string {
 export function buildAppUrl(pathname: string): string {
   return new URL(pathname, `${getAppUrl()}/`).toString()
 }
+
+export function buildAppUrlSafe(pathname: string, fallbackOrigin: string): string {
+  try {
+    return buildAppUrl(pathname)
+  } catch {
+    return new URL(pathname, `${fallbackOrigin}/`).toString()
+  }
+}

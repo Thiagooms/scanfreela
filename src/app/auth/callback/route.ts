@@ -2,11 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
 import { SupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import { buildAppUrlSafe } from '@/lib/config/app-url'
 import { ProfileRepository } from '@/lib/repositories/profile.repository'
 
 export async function GET(request: NextRequest) {
   const requestUrl = new URL(request.url)
-  const origin = requestUrl.origin
+  const fallbackOrigin = requestUrl.origin
   const code = requestUrl.searchParams.get('code')
 
   if (code) {
@@ -30,10 +31,12 @@ export async function GET(request: NextRequest) {
 
     if (!error && data.user) {
       const profileRepository = new ProfileRepository(supabase as unknown as SupabaseClient)
-      await profileRepository.ensureProfile(data.user.id).catch(() => null)
-      return NextResponse.redirect(`${origin}/dashboard`)
+      await profileRepository.ensureProfile(data.user.id).catch((profileError: unknown) => {
+        console.error('[auth/callback] ensureProfile falhou:', profileError)
+      })
+      return NextResponse.redirect(buildAppUrlSafe('/dashboard', fallbackOrigin))
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth`)
+  return NextResponse.redirect(buildAppUrlSafe('/login?error=auth', fallbackOrigin))
 }
