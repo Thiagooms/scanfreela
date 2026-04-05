@@ -7,9 +7,10 @@ import { KanbanColumn } from './KanbanColumn'
 interface KanbanBoardProps {
   leads: Lead[]
   onMove: (leadId: string, status: LeadStatus) => void
+  userService?: string
 }
 
-export function KanbanBoard({ leads, onMove }: KanbanBoardProps) {
+export function KanbanBoard({ leads, onMove, userService }: KanbanBoardProps) {
   const leadsByStatus = useMemo(
     () => LEAD_STATUS_ORDER.reduce<Record<LeadStatus, Lead[]>>(
       (groupedLeads, status) => ({
@@ -31,6 +32,7 @@ export function KanbanBoard({ leads, onMove }: KanbanBoardProps) {
           leads={leadsByStatus[status]}
           onMove={onMove}
           nextStatus={LEAD_STATUS_FLOW[status]}
+          userService={userService}
         />
       ))}
     </div>

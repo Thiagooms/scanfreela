@@ -3,20 +3,21 @@
 import { useEffect, useState } from 'react'
 import { KanbanBoard } from '@/components/pipeline/KanbanBoard'
 import { leadApiClient } from '@/lib/api/lead.client'
+import { profileApiClient } from '@/lib/api/profile.client'
 import { Lead, LeadStatus } from '@/lib/types/lead'
 
 export function PipelinePageClient() {
   const [leads, setLeads] = useState<Lead[]>([])
+  const [userService, setUserService] = useState<string | undefined>(undefined)
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    leadApiClient.list()
-      .then(data => {
-        setLeads(data)
+    Promise.all([leadApiClient.list(), profileApiClient.get()])
+      .then(([leadsData, profileData]) => {
+        setLeads(leadsData)
+        setUserService(profileData.service ?? undefined)
       })
-      .finally(() => {
-        setIsLoading(false)
-      })
+      .finally(() => setIsLoading(false))
   }, [])
 
   async function handleMove(leadId: string, status: LeadStatus) {
@@ -34,7 +35,7 @@ export function PipelinePageClient() {
       {isLoading ? (
         <p className="text-sm text-gray-500 text-center py-12">Carregando leads...</p>
       ) : (
-        <KanbanBoard leads={leads} onMove={handleMove} />
+        <KanbanBoard leads={leads} onMove={handleMove} userService={userService} />
       )}
     </main>
   )

@@ -9,9 +9,10 @@ interface KanbanColumnProps {
   leads: Lead[]
   onMove: (leadId: string, status: LeadStatus) => void
   nextStatus: LeadStatus | null
+  userService?: string
 }
 
-export function KanbanColumn({ title, leads, onMove, nextStatus }: KanbanColumnProps) {
+export function KanbanColumn({ title, leads, onMove, nextStatus, userService }: KanbanColumnProps) {
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center justify-between">
@@ -27,6 +28,7 @@ export function KanbanColumn({ title, leads, onMove, nextStatus }: KanbanColumnP
             lead={lead}
             onMove={onMove}
             nextStatus={nextStatus}
+            userService={userService}
           />
         ))}
       </div>

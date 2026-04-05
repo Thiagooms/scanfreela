@@ -6,6 +6,7 @@ export interface ProfileResult {
   plan: UserPlan
   effectivePlan: UserPlan
   trialEndsAt: string | null
+  service: string | null
 }
 
 export const profileApiClient = {
