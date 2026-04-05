@@ -13,7 +13,7 @@ export async function GET() {
       const leadService = makeLeadService(supabase)
       const planGuard = makePlanGuard(supabase)
 
-      await planGuard.assertPaidPlan(user.id)
+      await planGuard.assertAuthenticated(user.id)
 
       const leads = await leadService.listByUser(user.id)
       return NextResponse.json(leads)

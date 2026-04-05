@@ -30,4 +30,4 @@ export const NON_REUSABLE_SUBSCRIPTION_STATUSES = new Set([
   'rejected',
 ])
 
-export const FREE_PLAN_LEAD_LIMIT = 10
+export const FREE_PLAN_LEAD_LIMIT = 30

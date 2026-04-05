@@ -20,7 +20,7 @@ export async function PATCH(
       const leadService = makeLeadService(supabase)
       const planGuard = makePlanGuard(supabase)
 
-      await planGuard.assertPaidPlan(user.id)
+      await planGuard.assertAuthenticated(user.id)
 
       const lead = await leadService.update(leadId, user.id, body)
       return NextResponse.json(lead)
