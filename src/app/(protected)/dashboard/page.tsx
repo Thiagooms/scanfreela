@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { SearchForm } from '@/components/search/SearchForm'
 import { ResultsList } from '@/components/search/ResultsList'
 import { PaywallModal } from '@/components/paywall/PaywallModal'
@@ -10,6 +10,8 @@ import { createClient } from '@/lib/supabase/client'
 
 export default function DashboardPage() {
   const [userEmail, setUserEmail] = useState('')
+  const [prefill, setPrefill] = useState<{ query: string; city: string } | undefined>()
+  const autoSearchFired = useRef(false)
   const {
     searchResults,
     isSearching,
@@ -29,12 +31,16 @@ export default function DashboardPage() {
   }, [])
 
   useEffect(() => {
+    if (autoSearchFired.current) return
     if (sessionStorage.getItem('spotlead:firstSearch') !== 'true') return
+    autoSearchFired.current = true
     sessionStorage.removeItem('spotlead:firstSearch')
 
     profileApiClient.get().then(profile => {
       if (profile.service && profile.city) {
-        search({ query: profile.service, city: profile.city })
+        const params = { query: profile.service, city: profile.city }
+        setPrefill(params)
+        search(params)
       }
     })
   }, [search])
@@ -47,7 +53,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="mb-8">
-        <SearchForm onSearch={search} isLoading={isSearching} />
+        <SearchForm onSearch={search} isLoading={isSearching} initialValues={prefill} />
       </div>
 
       {isSearching && (

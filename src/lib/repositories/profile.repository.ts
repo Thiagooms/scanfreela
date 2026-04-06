@@ -97,7 +97,7 @@ export class ProfileRepository {
   }
 
   async updateOnboarding(userId: string, service: string, city: string): Promise<void> {
-    const { error, count } = await this.supabase
+    const { error, data } = await this.supabase
       .from('profiles')
       .update({
         service,
@@ -105,10 +105,10 @@ export class ProfileRepository {
         onboarding_completed_at: new Date().toISOString(),
       })
       .eq('id', userId)
-      .select('id', { count: 'exact', head: true })
+      .select('id')
 
     if (error) throw new Error(error.message)
-    if (count === 0) throw new Error('Perfil nao encontrado ou acesso negado')
+    if (!data || data.length === 0) throw new Error('Perfil nao encontrado ou acesso negado')
   }
 
   private toEntity(row: Record<string, unknown> | null): Profile | null {

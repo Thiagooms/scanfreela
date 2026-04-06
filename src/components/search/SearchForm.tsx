@@ -1,16 +1,23 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PlacesSearchParams } from '@/lib/types/places'
 
 interface SearchFormProps {
   onSearch: (params: PlacesSearchParams) => void
   isLoading: boolean
+  initialValues?: { query: string; city: string }
 }
 
-export function SearchForm({ onSearch, isLoading }: SearchFormProps) {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [searchCity, setSearchCity] = useState('')
+export function SearchForm({ onSearch, isLoading, initialValues }: SearchFormProps) {
+  const [searchQuery, setSearchQuery] = useState(initialValues?.query ?? '')
+  const [searchCity, setSearchCity] = useState(initialValues?.city ?? '')
+
+  useEffect(() => {
+    if (!initialValues?.query && !initialValues?.city) return
+    setSearchQuery(initialValues.query)
+    setSearchCity(initialValues.city)
+  }, [initialValues])
 
   function handleSubmit(event: React.FormEvent) {
     event.preventDefault()

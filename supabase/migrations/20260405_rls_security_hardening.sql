@@ -16,9 +16,6 @@ create policy "profiles: service_role insere perfil no primeiro acesso"
   on public.profiles for insert
   with check (auth.role() = 'service_role');
 
--- Bloqueia insert/update direto em leads para authenticated
--- Toda inserção deve passar pelo RPC save_lead_secure (security definer)
--- Atualização de status/notes ainda é permitida via API (Row Level Security por user_id)
 
 drop policy if exists "leads: usuarios inserem apenas os proprios" on public.leads;
 
