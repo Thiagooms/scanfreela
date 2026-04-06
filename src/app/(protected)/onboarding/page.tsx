@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 
 const SERVICE_OPTIONS = [
   'Fotografia',
@@ -16,7 +15,6 @@ const SERVICE_OPTIONS = [
 type Step = 'service' | 'city'
 
 export default function OnboardingPage() {
-  const router = useRouter()
   const [step, setStep] = useState<Step>('service')
   const [service, setService] = useState('')
   const [customService, setCustomService] = useState('')
@@ -47,7 +45,7 @@ export default function OnboardingPage() {
       }
 
       sessionStorage.setItem('spotlead:firstSearch', 'true')
-      router.push('/dashboard')
+      window.location.href = '/dashboard'
     } catch {
       setSubmitError('Erro de conexão. Tente novamente.')
       setIsSubmitting(false)
